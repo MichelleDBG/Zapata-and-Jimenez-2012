@@ -1,0 +1,31 @@
+## Species delimitation: inferring gaps in morphology across geography
+
+library(plyr)
+
+# Phacelia formosula, gina-gleneae, and scullyi
+
+# Change the working directory to the folder with csv files for PhFo
+setwd(path.expand("P:/My Documents/Edits for others/2014/Phacelia formosula_2014"))
+phfo <- read.csv("Copy of Phacelia formosula data 2014.csv", 
+		head = T, 
+		as.is = T)
+head(phfo)
+summary(phfo)
+
+# When X is univariate, bimodality is a necessary but not sufficient condition to support 
+# the hypothesis that a sample of morhpological measurements represents two species
+#	1) pick an a priori frequency cutoff below which overlap is rare enough to suggest
+#		evolutionary isolation. Say 95% CI that 90% of hypothesized species don't overlap
+
+
+
+
+#	2) Multivariate can have two modes so have to inspect the ridgeline manifold. 
+#		The Ridgeline manifold is guaranteed to include the maxima, minima, and saddles)
+#	(Ray and Lindsay 2005): 
+
+nlm(Species ~ Plant.Height + Width + Leaf.length + Leaf.width + Cyme.length +
+			Flw.length + Sepal.length + Cap..length + Cap..width,
+	start = list(ddply(phfo, .(Species), summarise, 
+			mean(Plant.Height, na.rm = TRUE))[,2]))
+
