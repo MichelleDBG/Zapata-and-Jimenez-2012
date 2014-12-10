@@ -1,6 +1,10 @@
 ## Species delimitation: inferring gaps in morphology across geography
 
 library(plyr)
+library(ggplot2)
+library(candisc)	# what function do I use, and what output from what function?
+library(mco)	# Don't know how to use
+
 
 # Phacelia formosula, gina-gleneae, and scullyi
 
@@ -11,6 +15,76 @@ phfo <- read.csv("Copy of Phacelia formosula data 2014.csv",
 		as.is = T)
 head(phfo)
 summary(phfo)
+names(phfo)
+
+dens <- ddply(phfo, .(Species), summarise,
+	dens.P.H = density(Plant.Height, na.rm = TRUE)$x,		#1
+	 dens.W = density(Width, na.rm = TRUE)$x,
+	dens.Seeds = density(Seeds, na.rm = TRUE)$x,
+	 dens.Leaf.length = density(Leaf.length, na.rm = TRUE)$x,
+	dens.Leaf.width= density(Leaf.width, na.rm = TRUE)$x,		#5
+	 dens.Cyme.length= density(Cyme.length, na.rm = TRUE)$x,
+	dens.Flw.length= density(Flw.length, na.rm=TRUE)$x,
+	 dens.Sepal.length= density(Sepal.length, na.rm = TRUE)$x,
+	 dens.Cap..length= density(Cap..length, na.rm = TRUE)$x,
+	dens.P.Hy = density(Plant.Height, na.rm = TRUE)$y,		#10
+	 dens.Wy = density(Width, na.rm = TRUE)$y,
+	dens.Seedsy = density(Seeds, na.rm = TRUE)$y,
+	 dens.Leaf.lengthy = density(Leaf.length, na.rm = TRUE)$y,
+	dens.Leaf.widthy= density(Leaf.width, na.rm = TRUE)$y,
+	 dens.Cyme.lengthy= density(Cyme.length, na.rm = TRUE)$y,	#15
+	dens.Flw.lengthy= density(Flw.length, na.rm=TRUE)$y,
+	 dens.Sepal.lengthy= density(Sepal.length, na.rm = TRUE)$y,
+	 dens.Cap..lengthy= density(Cap..length, na.rm = TRUE)$y)	#18
+
+quants <- ddply(phfo, .(Species), summarise,
+	Q5P.H = quantile(Plant.Height, 0.05),
+	Q95P.H = quantile(Plant.Height, 0.95),
+	Q5W = quantile(Width, 0.05),
+	Q95W = quantile(Width, 0.95))
+
+ggplot(phfo, aes(Plant.Height, fill = Species)) +
+	geom_density(alpha = 0.5) +
+	geom_vline(aes(xintercept =quants$Q5P.H[1], colour = Species)) +
+	geom_vline(aes(xintercept=quants$Q5P.H[2])) +
+	geom_vline(aes(xintercept=quants$Q5P.H[3])) + 	
+	geom_vline(aes(xintercept=quants$Q95P.H[1])) +
+	geom_vline(aes(xintercept=quants$Q95P.H[2])) +
+	geom_vline(aes(xintercept=quants$Q95P.H[3])) 
+
+
+ggplot(phfo, aes(Plant.Height, fill = Species)) +
+	geom_density(alpha = 0.5) +
+	geom_vline(data = quants, aes(xintercept = Q5P.H, colour = Species), linetype = "dashed") +
+	geom_vline(data = quants, aes(xintercept = Q95P.H, colour = Species))
+	
+
+
+ggplot(phfo, aes(Seeds, fill = Species)) +
+	geom_density(alpha = 0.5)
+
+ggplot(phfo, aes(Width, fill = Species)) +
+	geom_density(alpha = 0.5)
+	
+ggplot(phfo, aes(Leaf.length, fill = Species)) +
+	geom_density(alpha = 0.5)
+	
+ggplot(phfo, aes(Leaf.width, fill = Species)) +
+	geom_density(alpha = 0.75)
+	
+ggplot(phfo, aes(Cyme.length, fill = Species)) +
+	geom_density(alpha = 0.75)
+	
+ggplot(phfo, aes(Flw.length, fill = Species)) +
+	geom_density(alpha = 0.75)
+
+ggplot(phfo, aes(Sepal.length, fill = Species)) +
+	geom_density(alpha = 0.75)
+
+ggplot(phfo, aes(Cap..length, fill = Species)) +
+	geom_density(alpha = 0.75)
+	
+
 
 # When X is univariate, bimodality is a necessary but not sufficient condition to support 
 # the hypothesis that a sample of morhpological measurements represents two species
@@ -23,9 +97,25 @@ summary(phfo)
 #	2) Multivariate can have two modes so have to inspect the ridgeline manifold. 
 #		The Ridgeline manifold is guaranteed to include the maxima, minima, and saddles)
 #	(Ray and Lindsay 2005): 
+# can use any nonlinear optimization software
 
-nlm(Species ~ Plant.Height + Width + Leaf.length + Leaf.width + Cyme.length +
-			Flw.length + Sepal.length + Cap..length + Cap..width,
+# http://www.ms.uky.edu/~mai/sta321/MLEexample.pdf 
+
+nlm(glm(Species ~ Plant.Height + Width + Leaf.length + Leaf.width + 
+			Cyme.length + Flw.length + Sepal.length + 
+			Cap..length + Cap..width, data = phfo)$fitted.values,
 	start = list(ddply(phfo, .(Species), summarise, 
 			mean(Plant.Height, na.rm = TRUE))[,2]))
+
+
+
+
+
+# library(candisc)
+phfo.mod <- lm(cbind(names(phfo[,8:16])) ~ as.factor(Population.Code) + 
+							as.factor(Species), data = phfo)
+
+
+
+
 
